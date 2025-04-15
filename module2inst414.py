@@ -79,3 +79,41 @@ print(important_pagerank.head(10))
 
 # Export to CSV
 centrality_df.to_csv('character_centrality.csv', index=False)
+
+from networkx.algorithms.components import connected_components
+
+# Step 1: Get the top 100 characters by PageRank
+top_100_characters = important_pagerank['Character'].head(100).tolist()
+
+# Step 2: Create a subgraph with only the top 100 characters
+top_100_subgraph = g.subgraph(top_100_characters).copy()
+
+# Step 3: Keep only the largest connected component
+largest_cc = max(connected_components(top_100_subgraph), key=len)
+main_subgraph = top_100_subgraph.subgraph(largest_cc).copy()
+
+# Function to draw the graph using different layouts
+def draw_graph(graph, layout_func, layout_name, filename):
+    plt.figure(figsize=(15, 15))
+    pos = layout_func(graph, k=.9)
+
+    # Draw nodes
+    node_sizes = [PageRank[node] * 10000 for node in graph.nodes()]
+    nx.draw_networkx_nodes(graph, pos, node_size=node_sizes, node_color='skyblue', alpha=0.8)
+
+    # Draw edges
+    nx.draw_networkx_edges(graph, pos, edge_color='gray', alpha=0.3)
+
+    # Draw labels
+    nx.draw_networkx_labels(graph, pos, font_size=14, font_color='#333333')
+
+    plt.title("Top 100 Characters by PageRank", fontsize=18)
+    plt.axis('off')
+    plt.tight_layout()
+    plt.savefig(filename, format='png', dpi=300)
+
+    plt.show()
+
+# Try different layouts
+draw_graph(main_subgraph, nx.spring_layout, "Spring Layout", "top100_spring_layout.png")
+
